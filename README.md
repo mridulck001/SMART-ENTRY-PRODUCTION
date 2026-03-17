@@ -1,7 +1,7 @@
 # NIELIT Smart Entry
 
 QR-code based access control and visitor management for NIELIT Ropar, built with Flask.
-CD 
+
 ## Features
 - NIELIT-branded UI with logo and background image
 - Register users and generate secure QR access passes
@@ -49,8 +49,3 @@ docker compose up -d
 | `/api/v1/admin/dashboard-ui` | Admin dashboard (password protected) |
 | `/health` | Health check |
 
-## Static Assets
-
-Place branding files in `app/static/`:
-- `nielit-logo.png` — NIELIT logo used in navbar and page headers
-- `image-nielit.jpg` — Background image used across the web interface
