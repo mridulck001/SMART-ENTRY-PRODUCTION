@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto fade-in">
+    <div class="mb-8 flex justify-between items-center border-b border-slate-200 pb-5">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-800">NIELIT Visitor Entry Log</h2>
+            <p class="text-slate-500 mt-1 text-sm">Record walk-in visitors and temporary guests at NIELIT facility.</p>
+        </div>
+        <i class="fa-solid fa-clipboard-user text-3xl text-amber-500"></i>
+    </div>
+
+    <form id="visitorForm" class="space-y-5" novalidate>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Visitor Full Name <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <i class="fa-regular fa-user absolute left-3 top-3 text-slate-400 text-sm"></i>
+                    <input type="text" id="visitorName" required maxlength="100" placeholder="Full name"
+                        class="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition text-sm">
+                </div>
+                <p id="errName" class="hidden text-xs text-red-500 mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Contact Number <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <i class="fa-solid fa-phone absolute left-3 top-3 text-slate-400 text-sm"></i>
+                    <input type="tel" id="visitorPhone" required maxlength="20" placeholder="+91 XXXXXXXXXX"
+                        class="w-full pl-9 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition text-sm">
+                </div>
+                <p id="errPhone" class="hidden text-xs text-red-500 mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Host / Person to Meet</label>
+                <input type="text" id="hostName" maxlength="100" placeholder="Employee name (optional)"
+                    class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">ID Proof Shown</label>
+                <select id="idProof" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition text-sm bg-white">
+                    <option value="">— Not provided —</option>
+                    <option>Aadhaar Card</option>
+                    <option>PAN Card</option>
+                    <option>Driving License</option>
+                    <option>Passport</option>
+                    <option>Voter ID</option>
+                    <option>Employee ID</option>
+                    <option>Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Purpose of Visit <span class="text-red-500">*</span></label>
+            <textarea id="visitorPurpose" rows="3" required maxlength="255"
+                placeholder="e.g. Meeting with HR, Package delivery, Maintenance work..."
+                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition text-sm resize-none"></textarea>
+            <p id="errPurpose" class="hidden text-xs text-red-500 mt-1"></p>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Guard / Logged By</label>
+            <input type="text" id="addedBy" value="Gate Guard 1" maxlength="50"
+                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none transition text-sm">
+        </div>
+
+        <div id="formError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"></div>
+
+        <button type="submit" id="submitVisitorBtn"
+            class="w-full bg-amber-600 hover:bg-amber-700 active:scale-[.98] text-white font-bold py-3 px-4 rounded-lg transition-all flex justify-center items-center gap-2 shadow-md text-sm">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Authorize Entry & Log Time
+        </button>
+    </form>
+
+    <!-- Success state -->
+    <div id="visitorSuccess" class="hidden mt-8 p-6 bg-emerald-50 border border-emerald-200 rounded-xl text-center fade-in">
+        <i class="fa-solid fa-circle-check text-5xl text-emerald-500 mb-3"></i>
+        <h3 class="text-xl font-bold text-slate-800 mb-1">Visitor Logged</h3>
+        <p class="text-sm text-slate-500 mb-1" id="logTimeText"></p>
+        <p class="text-sm text-slate-500 mb-1" id="logVisitorIdText"></p>
+        <div class="flex justify-center gap-3 mt-4">
+            <button onclick="resetVisitorForm()"
+                class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition">
+                <i class="fa-solid fa-plus"></i> Log Another
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function setLoading(loading) {
+    const btn = document.getElementById('submitVisitorBtn');
+    btn.disabled = loading;
+    btn.innerHTML = loading
+        ? '<i class="fa-solid fa-spinner fa-spin"></i> Processing...'
+        : '<i class="fa-solid fa-arrow-right-to-bracket"></i> Authorize Entry & Log Time';
+}
+
+document.getElementById('visitorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Clear previous errors
+    ['errName','errPhone','errPurpose'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+        document.getElementById(id).textContent = '';
+    });
+    document.getElementById('formError').classList.add('hidden');
+
+    const payload = {
+        name: document.getElementById('visitorName').value.trim(),
+        phone: document.getElementById('visitorPhone').value.trim(),
+        purpose: document.getElementById('visitorPurpose').value.trim(),
+        host_name: document.getElementById('hostName').value.trim() || null,
+        id_proof: document.getElementById('idProof').value || null,
+        added_by: document.getElementById('addedBy').value.trim() || 'Gate Guard',
+    };
+
+    try {
+        const res = await fetch('/api/v1/manual/visitor', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+
+        if (res.ok) {
+            document.getElementById('visitorForm').classList.add('hidden');
+            document.getElementById('visitorSuccess').classList.remove('hidden');
+            const dt = new Date(result.data.entry_time);
+            document.getElementById('logTimeText').textContent = `Entry Time: ${dt.toLocaleTimeString()} on ${dt.toLocaleDateString()}`;
+            document.getElementById('logVisitorIdText').textContent = `Visitor ID: #${result.data.visitor_id}`;
+        } else if (res.status === 422 && result.errors) {
+            for (const [field, msg] of Object.entries(result.errors)) {
+                const errEl = document.getElementById('err' + field.charAt(0).toUpperCase() + field.slice(1));
+                if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+            }
+            setLoading(false);
+        } else {
+            document.getElementById('formError').textContent = result.message || 'An error occurred.';
+            document.getElementById('formError').classList.remove('hidden');
+            setLoading(false);
+        }
+    } catch(err) {
+        document.getElementById('formError').textContent = 'Network error. Please try again.';
+        document.getElementById('formError').classList.remove('hidden');
+        setLoading(false);
+    }
+});
+
+function resetVisitorForm() {
+    document.getElementById('visitorForm').reset();
+    document.getElementById('visitorForm').classList.remove('hidden');
+    document.getElementById('visitorSuccess').classList.add('hidden');
+    setLoading(false);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIELIT Smart Entry System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/form.js" defer></script>
+</head>
+<body class="app-shell text-slate-800 antialiased min-h-screen flex flex-col">
+    {% set nav_mode %}{% block nav_mode %}{{ ui_section }}{% endblock %}{% endset %}
+
+    <div class="bg-orb orb-one"></div>
+    <div class="bg-orb orb-two"></div>
+
+    <nav class="app-nav sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <a href="/" class="flex items-center space-x-3 hover:opacity-90 transition">
+                    <img src="/static/nielit-logo.png" alt="NIELIT" class="h-10 w-auto object-contain">
+                    <span class="font-bold text-xl tracking-tight text-white">NIELIT Smart Entry</span>
+                </a>
+
+                <button id="mobileMenuBtn" class="sm:hidden text-white/90 px-3 py-2 rounded-lg border border-white/20" type="button">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div id="desktopNav" class="hidden sm:flex items-center gap-2 text-sm">
+                    {% if nav_mode|trim == 'scanner' %}
+                        <span class="chip chip-scanner"><i class="fa-solid fa-qrcode mr-1"></i>Scanner Terminal</span>
+                        <a href="/" class="nav-link"><i class="fa-solid fa-house"></i><span>Operations Home</span></a>
+                    {% elif nav_mode|trim == 'admin' %}
+                        {% if is_admin_session %}
+                            <a href="/api/v1/admin/dashboard-ui" class="nav-link"><i class="fa-solid fa-gauge-high"></i><span>Dashboard</span></a>
+                            <a href="/api/v1/admin/export/daily-register" class="nav-link"><i class="fa-solid fa-file-csv"></i><span>Daily CSV</span></a>
+                            <a href="/api/v1/admin/export/visitors" class="nav-link"><i class="fa-solid fa-file-csv"></i><span>Visitors CSV</span></a>
+                        {% else %}
+                            <span class="chip chip-admin"><i class="fa-solid fa-lock mr-1"></i>Admin Sign In</span>
+                        {% endif %}
+                        <a href="/" class="nav-link"><i class="fa-solid fa-house"></i><span>Main Portal</span></a>
+                    {% else %}
+                        <a href="/api/v1/portal/" class="nav-link"><i class="fa-solid fa-user-plus"></i><span>Register</span></a>
+                        <a href="/api/v1/manual/" class="nav-link"><i class="fa-solid fa-clipboard-user"></i><span>Visitors</span></a>
+                        <a href="/api/v1/admin/dashboard-ui" class="nav-link"><i class="fa-solid fa-lock"></i><span>Admin Login</span></a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="mobileNav" class="sm:hidden hidden pb-4 space-y-2 text-sm">
+                {% if nav_mode|trim == 'scanner' %}
+                    <a href="/" class="mobile-link">Operations Home</a>
+                {% elif nav_mode|trim == 'admin' %}
+                    <a href="/" class="mobile-link">Main Portal</a>
+                    {% if is_admin_session %}
+                        <a href="/api/v1/admin/export/daily-register" class="mobile-link">Export Daily CSV</a>
+                        <a href="/api/v1/admin/export/visitors" class="mobile-link">Export Visitor CSV</a>
+                    {% endif %}
+                {% else %}
+                    <a href="/api/v1/portal/" class="mobile-link">Register</a>
+                    <a href="/api/v1/manual/" class="mobile-link">Visitors</a>
+                    <a href="/api/v1/admin/dashboard-ui" class="mobile-link">Admin Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if nav_mode|trim == 'general' %}
+    <a href="/api/v1/gate/" class="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-40 px-4 py-3 rounded-full bg-emerald-600 text-white text-sm font-bold shadow-lg hover:bg-emerald-500 transition flex items-center gap-2">
+        <i class="fa-solid fa-qrcode"></i><span>Scanner Terminal</span>
+    </a>
+    {% endif %}
+
+    <footer class="text-slate-500 py-5 text-center text-xs">
+        &copy; {{ current_year }} NIELIT Smart Entry System - Smart Entry Management Solution
+    </footer>
+
+    <script>
+    const mobileBtn = document.getElementById('mobileMenuBtn');
+    const mobileNav = document.getElementById('mobileNav');
+    if (mobileBtn && mobileNav) {
+        mobileBtn.addEventListener('click', () => mobileNav.classList.toggle('hidden'));
+    }
+    </script>
+</body>
+</html>

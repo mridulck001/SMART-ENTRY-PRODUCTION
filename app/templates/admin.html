@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% block nav_mode %}admin{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto fade-in">
+
+    <!-- Login wall -->
+    <div id="loginWall" class="max-w-sm mx-auto mt-10">
+        <div class="bg-white rounded-xl shadow-lg p-8 text-center">
+            <img src="/static/nielit-logo.png" alt="NIELIT" class="h-16 w-auto object-contain mx-auto mb-4">
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">NIELIT Admin Access</h2>
+            <p class="text-slate-500 text-sm mb-6">Enter the admin password to access the dashboard.</p>
+            <input type="password" id="adminPass" placeholder="Password" maxlength="100"
+                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm mb-3">
+            <p id="loginErr" class="hidden text-xs text-red-500 mb-3"></p>
+            <button onclick="doLogin()"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+                <i class="fa-solid fa-right-to-bracket mr-1"></i> Login
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard (hidden until authed) -->
+    <div id="dashboard" class="hidden">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-3xl font-bold text-slate-800"><i class="fa-solid fa-gauge-high mr-2 text-indigo-500"></i>Admin Dashboard</h2>
+            <button onclick="doLogout()" class="text-sm text-slate-500 hover:text-red-500 transition flex items-center gap-1">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-xl shadow p-5 text-center border-t-4 border-indigo-500">
+                <p class="text-3xl font-extrabold text-indigo-600" id="dUsers">—</p>
+                <p class="text-xs text-slate-500 mt-1">Total Users</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5 text-center border-t-4 border-emerald-500">
+                <p class="text-3xl font-extrabold text-emerald-600" id="dEntries">—</p>
+                <p class="text-xs text-slate-500 mt-1">Entries Today</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5 text-center border-t-4 border-sky-500">
+                <p class="text-3xl font-extrabold text-sky-600" id="dOnPremises">—</p>
+                <p class="text-xs text-slate-500 mt-1">On Premises</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-5 text-center border-t-4 border-amber-500">
+                <p class="text-3xl font-extrabold text-amber-600" id="dVisitors">—</p>
+                <p class="text-xs text-slate-500 mt-1">Visitors Today</p>
+            </div>
+        </div>
+
+        <!-- Export row with date picker -->
+        <div class="flex gap-3 mb-8 flex-wrap items-center">
+            <input type="date" id="exportDatePicker" class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <a id="exportRegisterBtn" href="#" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-file-csv"></i> Export Daily Register
+            </a>
+            <a id="exportVisitorsBtn" href="#" class="bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-file-csv"></i> Export Visitor Log
+            </a>
+            <button onclick="loadDashboard()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold px-4 py-2.5 rounded-lg transition flex items-center gap-2">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+        </div>
+
+        <!-- Recent entries table -->
+        <div class="bg-white rounded-xl shadow overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-700">Recent Entries</h3>
+                <span class="text-xs text-slate-400">Last 10 scans</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                        <tr>
+                            <th class="px-5 py-3 text-left">Name</th>
+                            <th class="px-5 py-3 text-left">Role</th>
+                            <th class="px-5 py-3 text-left">Department</th>
+                            <th class="px-5 py-3 text-left">Type</th>
+                            <th class="px-5 py-3 text-left">Transport</th>
+                            <th class="px-5 py-3 text-left">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTable" class="divide-y divide-slate-50">
+                        <tr><td colspan="6" class="px-5 py-6 text-center text-slate-400">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- User management -->
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center flex-wrap gap-3">
+                <h3 class="font-bold text-slate-700">Registered Users</h3>
+                <input type="text" id="userSearch" placeholder="Search name, department, role..."
+                    oninput="loadUsers()"
+                    class="px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-400 w-64">
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                        <tr>
+                            <th class="px-5 py-3 text-left">Name</th>
+                            <th class="px-5 py-3 text-left">Role</th>
+                            <th class="px-5 py-3 text-left">Dept.</th>
+                            <th class="px-5 py-3 text-left">Status</th>
+                            <th class="px-5 py-3 text-left">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTable" class="divide-y divide-slate-50">
+                        <tr><td colspan="5" class="px-5 py-6 text-center text-slate-400">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="pagination" class="px-5 py-3 flex justify-end gap-2 border-t border-slate-100 text-sm text-slate-500"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+
+async function doLogin() {
+    const pass = document.getElementById('adminPass').value;
+    const errEl = document.getElementById('loginErr');
+    errEl.classList.add('hidden');
+    try {
+        const res = await fetch('/api/v1/admin/login', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({password: pass}),
+        });
+        if (res.ok) {
+            document.getElementById('loginWall').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            loadDashboard(); loadUsers();
+        } else {
+            errEl.textContent = 'Incorrect password.';
+            errEl.classList.remove('hidden');
+        }
+    } catch(e) {
+        errEl.textContent = 'Network error.';
+        errEl.classList.remove('hidden');
+    }
+}
+document.getElementById('adminPass').addEventListener('keypress', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogout() {
+    await fetch('/api/v1/admin/logout', {method:'POST'});
+    location.reload();
+}
+
+// Auto-logout when admin tab is switched / hidden
+document.addEventListener('visibilitychange', async () => {
+    const dashboard = document.getElementById('dashboard');
+    if (document.hidden && dashboard && !dashboard.classList.contains('hidden')) {
+        // Tab is hidden and user is logged in, auto-logout
+        await fetch('/api/v1/admin/logout', {method:'POST'});
+    }
+    if (!document.hidden && dashboard && !dashboard.classList.contains('hidden')) {
+        // Tab is visible again after being hidden, reload to force re-login
+        location.reload();
+    }
+});
+
+async function loadDashboard() {
+    try {
+        const res = await fetch('/api/v1/admin/dashboard');
+        const d = await res.json();
+        if (!res.ok) { if(res.status===401) location.reload(); return; }
+        const data = d.data;
+        document.getElementById('dUsers').textContent = data.total_registered_users;
+        document.getElementById('dEntries').textContent = data.entries_today;
+        document.getElementById('dOnPremises').textContent = data.on_premises;
+        document.getElementById('dVisitors').textContent = data.visitors_today;
+
+        const tbody = document.getElementById('recentTable');
+        if (!data.recent_entries.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="px-5 py-6 text-center text-slate-400">No entries yet today.</td></tr>';
+        } else {
+            tbody.innerHTML = data.recent_entries.map(e => {
+                const badge = e.entry_type === 'IN'
+                    ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700">IN</span>'
+                    : '<span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">OUT</span>';
+                const t = new Date(e.time);
+                return `<tr class="hover:bg-slate-50 transition">
+                    <td class="px-5 py-3 font-medium text-slate-800">${esc(e.name)}</td>
+                    <td class="px-5 py-3 text-slate-500">${esc(e.role)}</td>
+                    <td class="px-5 py-3 text-slate-500">${esc(e.department)}</td>
+                    <td class="px-5 py-3">${badge}</td>
+                    <td class="px-5 py-3 text-slate-500">${esc(e.transport||'—')}</td>
+                    <td class="px-5 py-3 text-slate-400 text-xs">${t.toLocaleTimeString()} ${t.toLocaleDateString()}</td>
+                </tr>`;
+            }).join('');
+        }
+    } catch(e) {}
+}
+
+async function loadUsers() {
+    const q = document.getElementById('userSearch').value;
+    try {
+        const res = await fetch(`/api/v1/admin/users?page=${currentPage}&q=${encodeURIComponent(q)}`);
+        if (res.status === 401) { location.reload(); return; }
+        const d = await res.json();
+        const tbody = document.getElementById('usersTable');
+        if (!d.data.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="px-5 py-6 text-center text-slate-400">No users found.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = d.data.map(u => {
+            const statusBadge = u.is_active
+                ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700">Active</span>'
+                : '<span class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700">Revoked</span>';
+            const actionBtn = u.is_active
+                ? `<button onclick="toggleUser(${u.id}, false)" class="text-xs text-red-500 hover:underline font-semibold">Revoke</button>`
+                : `<button onclick="toggleUser(${u.id}, true)" class="text-xs text-emerald-600 hover:underline font-semibold">Restore</button>`;
+            return `<tr class="hover:bg-slate-50 transition">
+                <td class="px-5 py-3 font-medium text-slate-800">${esc(u.name)}</td>
+                <td class="px-5 py-3 text-slate-500">${esc(u.role)}</td>
+                <td class="px-5 py-3 text-slate-500">${esc(u.department)}</td>
+                <td class="px-5 py-3">${statusBadge}</td>
+                <td class="px-5 py-3">${actionBtn}</td>
+            </tr>`;
+        }).join('');
+
+        // Pagination
+        const pages = d.pagination;
+        const pgEl = document.getElementById('pagination');
+        pgEl.innerHTML = `Page ${pages.page} of ${pages.pages} &nbsp;|&nbsp; ${pages.total} users`;
+    } catch(e) {}
+}
+
+async function toggleUser(id, activate) {
+    const action = activate ? 'activate' : 'deactivate';
+    if (!confirm(`${action.charAt(0).toUpperCase()+action.slice(1)} this user?`)) return;
+    try {
+        await fetch(`/api/v1/admin/users/${id}/${action}`, {method:'POST'});
+        loadUsers(); loadDashboard();
+    } catch(e) {}
+}
+
+function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Set default export date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('exportDatePicker').value = today;
+
+// Update export links when date changes
+document.getElementById('exportDatePicker').addEventListener('change', (e) => {
+    const selectedDate = e.target.value;
+    document.getElementById('exportRegisterBtn').href = `/api/v1/admin/export/daily-register?date=${selectedDate}`;
+    document.getElementById('exportVisitorsBtn').href = `/api/v1/admin/export/visitors?date=${selectedDate}`;
+});
+
+// Initial export link setup
+document.getElementById('exportRegisterBtn').href = `/api/v1/admin/export/daily-register?date=${today}`;
+document.getElementById('exportVisitorsBtn').href = `/api/v1/admin/export/visitors?date=${today}`;
+
+// Auto-try session (in case already logged in)
+fetch('/api/v1/admin/dashboard').then(r => {
+    if (r.ok) {
+        document.getElementById('loginWall').classList.add('hidden');
+        document.getElementById('dashboard').classList.remove('hidden');
+        loadDashboard(); loadUsers();
+    }
+});
+</script>
+{% endblock %}

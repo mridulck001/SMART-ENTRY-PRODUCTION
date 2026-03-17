@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto fade-in">
+    <div class="text-center mb-8">
+        <img src="/static/nielit-logo.png" alt="NIELIT" class="h-14 w-auto object-contain mx-auto mb-3">
+        <h2 class="text-3xl font-bold text-slate-800">NIELIT Access Pass Registration</h2>
+        <p class="text-slate-500 mt-2 text-sm">Fill in the details below to receive a secure QR entry pass for NIELIT facility.</p>
+    </div>
+
+    <form id="registrationForm" class="space-y-5" novalidate>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Full Name <span class="text-red-500">*</span></label>
+                <input type="text" id="name" required maxlength="100" placeholder="e.g. John Smith"
+                    class="field w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-sm">
+                <p class="err hidden text-xs text-red-500 mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Role <span class="text-red-500">*</span></label>
+                <select id="role" required class="field w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm bg-white">
+                    <option value="" disabled selected>Select role...</option>
+                    <option>Student</option><option>Staff</option><option>Intern</option>
+                </select>
+                <p class="err hidden text-xs text-red-500 mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Department <span class="text-red-500">*</span></label>
+                <input type="text" id="department" required maxlength="100" placeholder="e.g. Computer Science"
+                    class="field w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm">
+                <p class="err hidden text-xs text-red-500 mt-1"></p>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Mobile Number <span class="text-red-500">*</span></label>
+                <input type="tel" id="mobile_no" required maxlength="20" placeholder="e.g. +91 9876543210"
+                    class="field w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm">
+                <p class="err hidden text-xs text-red-500 mt-1"></p>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Default Transport</label>
+                <select id="default_transport" class="field w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm bg-white">
+                    <option value="Walking">🚶 Walking</option>
+                    <option value="Bicycle">🚲 Bicycle</option>
+                    <option value="Two-Wheeler">🏍️ Two-Wheeler</option>
+                    <option value="Public Transit">🚌 Public Transit</option>
+                    <option value="Car">🚗 Car</option>
+                    <option value="Auto-Rickshaw">🛺 Auto-Rickshaw</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Local Address <span class="text-red-500">*</span></label>
+            <textarea id="local_address" rows="3" required maxlength="500" placeholder="Full residential address..."
+                class="field w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm resize-none"></textarea>
+            <p class="err hidden text-xs text-red-500 mt-1"></p>
+        </div>
+
+        <div id="formError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700"></div>
+
+        <button type="submit" id="submitBtn"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[.98] text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 flex justify-center items-center gap-2 shadow-md text-sm">
+            <i class="fa-solid fa-qrcode"></i> Generate Access Pass
+        </button>
+    </form>
+
+    <!-- QR Result -->
+    <div id="qrResult" class="hidden mt-10 p-6 bg-slate-50 border border-slate-200 rounded-xl text-center fade-in">
+        <div class="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-3">
+            <i class="fa-solid fa-circle-check text-2xl text-green-600"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-1">Registration Successful!</h3>
+        <p class="text-sm text-slate-500 mb-5">Save and print this QR code. Present it at the gate for daily entry.</p>
+
+        <div class="bg-white p-4 inline-block rounded-xl shadow border border-slate-100 mb-4">
+            <img id="qrImage" src="" alt="QR Access Pass" class="w-52 h-52 mx-auto">
+        </div>
+
+        <div id="userInfo" class="text-left max-w-xs mx-auto bg-indigo-50 border border-indigo-100 rounded-lg p-4 text-sm mb-4">
+            <p><span class="font-semibold text-slate-600">Name:</span> <span id="infoName" class="text-slate-800"></span></p>
+            <p class="mt-1"><span class="font-semibold text-slate-600">Role:</span> <span id="infoRole" class="text-slate-800"></span></p>
+            <p class="mt-1"><span class="font-semibold text-slate-600">Department:</span> <span id="infoDept" class="text-slate-800"></span></p>
+        </div>
+
+        <div class="flex justify-center gap-4">
+            <a id="downloadBtn" href="#" download="AccessPass.png"
+               class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition">
+                <i class="fa-solid fa-download"></i> Download Pass
+            </a>
+            <button onclick="resetForm()" class="inline-flex items-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold px-5 py-2.5 rounded-lg transition">
+                <i class="fa-solid fa-plus"></i> Register Another
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function setLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.innerHTML = loading
+        ? '<i class="fa-solid fa-spinner fa-spin"></i> Processing...'
+        : '<i class="fa-solid fa-qrcode"></i> Generate Access Pass';
+}
+
+function showFieldErrors(errors) {
+    // clear previous
+    document.querySelectorAll('.field').forEach(f => f.classList.remove('border-red-400'));
+    document.querySelectorAll('.err').forEach(e => { e.classList.add('hidden'); e.textContent = ''; });
+
+    for (const [field, msg] of Object.entries(errors)) {
+        const input = document.getElementById(field);
+        if (input) {
+            input.classList.add('border-red-400');
+            const errEl = input.closest('div').querySelector('.err');
+            if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
+        }
+    }
+}
+
+document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    setLoading(btn, true);
+
+    const formError = document.getElementById('formError');
+    formError.classList.add('hidden');
+
+    const payload = {
+        name: document.getElementById('name').value.trim(),
+        role: document.getElementById('role').value,
+        department: document.getElementById('department').value.trim(),
+        mobile_no: document.getElementById('mobile_no').value.trim(),
+        local_address: document.getElementById('local_address').value.trim(),
+        default_transport: document.getElementById('default_transport').value,
+    };
+
+    try {
+        const res = await fetch('/api/v1/portal/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        const result = await res.json();
+
+        if (res.ok) {
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('qrResult').classList.remove('hidden');
+            const qr = result.data.qr_code_base64;
+            document.getElementById('qrImage').src = qr;
+            document.getElementById('downloadBtn').href = qr;
+            document.getElementById('downloadBtn').download = `AccessPass_${result.data.name.replace(/\s+/g,'_')}.png`;
+            document.getElementById('infoName').textContent = result.data.name;
+            document.getElementById('infoRole').textContent = result.data.role;
+            document.getElementById('infoDept').textContent = result.data.department;
+        } else if (res.status === 422 && result.errors) {
+            showFieldErrors(result.errors);
+            setLoading(btn, false);
+        } else {
+            formError.textContent = result.message || 'Registration failed. Please try again.';
+            formError.classList.remove('hidden');
+            setLoading(btn, false);
+        }
+    } catch (err) {
+        formError.textContent = 'Network error. Please check your connection.';
+        formError.classList.remove('hidden');
+        setLoading(btn, false);
+    }
+});
+
+function resetForm() {
+    document.getElementById('registrationForm').reset();
+    document.getElementById('registrationForm').classList.remove('hidden');
+    document.getElementById('qrResult').classList.add('hidden');
+    document.getElementById('submitBtn').disabled = false;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+{% block nav_mode %}scanner{% endblock %}
+{% block content %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<div class="max-w-5xl mx-auto fade-in">
+    <!-- Header -->
+    <div class="mb-6 flex justify-between items-center border-b border-slate-200 pb-4">
+        <div>
+            <h2 class="text-3xl font-bold text-slate-800">NIELIT Security Gate Terminal</h2>
+            <p class="text-slate-500 mt-1 text-sm">Present NIELIT QR pass at camera or upload an image for verification.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Entry / Exit toggle -->
+            <div class="flex bg-slate-100 rounded-lg p-1 text-xs font-semibold gap-1">
+                <button id="btnIN" onclick="setEntryType('IN')"
+                    class="px-3 py-1.5 rounded-md bg-emerald-600 text-white transition">IN</button>
+                <button id="btnOUT" onclick="setEntryType('OUT')"
+                    class="px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200 transition">OUT</button>
+            </div>
+            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                <span class="pulse-dot w-2 h-2 mr-2 bg-emerald-500 rounded-full inline-block"></span>System Online
+            </span>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+
+        <!-- ── Scanner pane ── -->
+        <div class="bg-slate-900 rounded-xl shadow-xl overflow-hidden flex flex-col items-center p-5">
+            <div class="w-full flex gap-2 mb-4">
+                <button id="cameraModeBtn" onclick="switchScanMode('camera')"
+                    class="flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold transition">
+                    <i class="fa-solid fa-camera mr-1"></i>Camera
+                </button>
+                <button id="fileModeBtn" onclick="switchScanMode('file')"
+                    class="flex-1 py-2 bg-slate-700 text-slate-300 rounded-lg text-sm font-semibold transition hover:bg-slate-600">
+                    <i class="fa-solid fa-image mr-1"></i>Upload
+                </button>
+            </div>
+
+            <!-- Camera -->
+            <div id="cameraScanner" class="w-full">
+                <div id="reader" class="w-full rounded-lg overflow-hidden border-2 border-slate-700"></div>
+                <p class="text-slate-400 text-xs mt-3 text-center"><i class="fa-solid fa-camera mr-1"></i>Point QR pass at the camera</p>
+            </div>
+
+            <!-- File upload -->
+            <div id="fileScanner" class="hidden w-full">
+                <label for="qrFileInput" class="flex flex-col items-center justify-center w-full h-52 border-2 border-dashed border-slate-600 rounded-xl cursor-pointer hover:border-indigo-500 transition bg-slate-800">
+                    <i class="fa-solid fa-cloud-arrow-up text-5xl text-slate-500 mb-3"></i>
+                    <p class="text-slate-300 text-sm font-medium">Click to upload QR image</p>
+                    <p class="text-slate-500 text-xs mt-1">PNG, JPG, JPEG supported</p>
+                </label>
+                <input type="file" id="qrFileInput" accept="image/*" class="hidden">
+            </div>
+
+            <!-- Guard station ID -->
+            <div class="w-full mt-4">
+                <input type="text" id="guardStation" value="Gate Terminal 1" maxlength="50"
+                    class="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-slate-300 text-xs focus:ring-1 focus:ring-indigo-500 outline-none">
+            </div>
+        </div>
+
+        <!-- ── Result pane ── -->
+        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col justify-center min-h-80">
+
+            <!-- Standby -->
+            <div id="standbyState" class="text-center py-10">
+                <i class="fa-solid fa-id-badge text-6xl text-slate-200 mb-4"></i>
+                <h3 class="text-xl font-semibold text-slate-400">Awaiting scan...</h3>
+                <p class="text-slate-300 text-sm mt-1">Mode: <span id="modeLabel" class="font-bold text-emerald-500">ENTRY</span></p>
+                <!-- Last entry quick-update bar -->
+                <div id="lastEntryBar" class="hidden mt-5 bg-indigo-50 border border-indigo-200 rounded-lg p-3 text-left">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-xs text-indigo-400 font-semibold uppercase tracking-wide">Last Entry</p>
+                            <p class="text-sm font-bold text-indigo-800" id="lastEntryName"></p>
+                        </div>
+                        <button id="addVehicleBtn" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition">
+                            <i class="fa-solid fa-car mr-1"></i>Add Vehicle
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result card -->
+            <div id="resultState" class="hidden">
+                <div id="statusBanner" class="py-4 px-5 rounded-xl mb-5 text-center border">
+                    <i id="statusIcon" class="text-5xl mb-2 block"></i>
+                    <h2 id="statusText" class="text-3xl font-extrabold tracking-tight"></h2>
+                    <p id="statusSub" class="text-sm mt-1 opacity-70"></p>
+                </div>
+
+                <div id="userDetails" class="hidden text-left bg-slate-50 p-5 rounded-xl border border-slate-200">
+                    <p class="text-xs text-slate-400 uppercase font-bold tracking-wider mb-1">Passholder</p>
+                    <p class="text-2xl font-extrabold text-slate-800" id="userName"></p>
+                    <div class="grid grid-cols-2 gap-3 mt-3 text-sm">
+                        <div><p class="text-xs text-slate-400">Role</p><p class="font-semibold text-slate-700" id="userRole"></p></div>
+                        <div><p class="text-xs text-slate-400">Department</p><p class="font-semibold text-slate-700" id="userDept"></p></div>
+                    </div>
+                    <!-- Entry time -->
+                    <div class="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-3">
+                        <p class="text-xs font-bold text-blue-500 mb-1"><i class="fa-solid fa-clock mr-1"></i>Entry Time</p>
+                        <p class="font-bold text-blue-800 text-lg" id="entryTime"></p>
+                        <p class="text-xs text-blue-500" id="entryDate"></p>
+                    </div>
+                    <!-- Transport -->
+                    <div class="mt-3 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+                        <div class="flex justify-between items-center">
+                            <p class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-car mr-1"></i>Transport</p>
+                            <button id="changeTransportBtn" class="text-xs text-emerald-700 underline font-semibold hover:text-emerald-900">Change</button>
+                        </div>
+                        <p class="font-bold text-emerald-800 mt-1" id="transportMode"></p>
+                        <p class="text-xs text-emerald-600" id="vehicleNumber"></p>
+                    </div>
+                </div>
+
+                <p id="cooldownText" class="text-center text-xs text-slate-400 mt-4">
+                    Scanner resumes in <span id="cooldownTimer" class="font-bold">5</span>s
+                    <button onclick="resetScannerUI()" class="ml-2 text-indigo-500 underline">Reset now</button>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transport Update Modal -->
+<div id="transportModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl shadow-2xl p-7 max-w-sm w-full fade-in">
+        <h3 class="text-xl font-bold text-slate-800 mb-5"><i class="fa-solid fa-car text-indigo-600 mr-2"></i>Update Transport</h3>
+        <div class="mb-4">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Mode</label>
+            <select id="modalTransportMode" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm bg-white">
+                <option>Walking</option><option>Bicycle</option><option>Two-Wheeler</option>
+                <option>Car</option><option>Bus</option><option>Auto-Rickshaw</option><option>Other</option>
+            </select>
+        </div>
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Vehicle Number <span class="text-slate-400 font-normal">(Optional)</span></label>
+            <input type="text" id="modalVehicleNumber" placeholder="e.g. MH-01-AB-1234" maxlength="20"
+                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm uppercase">
+        </div>
+        <div class="flex gap-3">
+            <button onclick="document.getElementById('transportModal').classList.add('hidden')"
+                class="flex-1 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold text-sm">Cancel</button>
+            <button id="saveTransportBtn" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm">
+                <i class="fa-solid fa-check mr-1"></i>Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let isScanningPaused = false;
+let currentEntryId = null;
+let currentScanMode = 'camera';
+let cameraStarted = false;
+let currentEntryType = 'IN';
+const cameraReader = new Html5Qrcode("reader");
+
+// ── Entry type toggle ────────────────────────────────────────
+function setEntryType(type) {
+    currentEntryType = type;
+    document.getElementById('modeLabel').textContent = type === 'IN' ? 'ENTRY' : 'EXIT';
+    document.getElementById('modeLabel').className = type === 'IN'
+        ? 'font-bold text-emerald-500' : 'font-bold text-amber-500';
+    document.getElementById('btnIN').className = type === 'IN'
+        ? 'px-3 py-1.5 rounded-md bg-emerald-600 text-white transition'
+        : 'px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200 transition';
+    document.getElementById('btnOUT').className = type === 'OUT'
+        ? 'px-3 py-1.5 rounded-md bg-amber-500 text-white transition'
+        : 'px-3 py-1.5 rounded-md text-slate-600 hover:bg-slate-200 transition';
+}
+
+// ── UUID extractor ───────────────────────────────────────────
+function extractUUID(raw) {
+    const s = raw.trim();
+    const match = s.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    return match ? match[0] : s;
+}
+
+// ── Scan mode switch ─────────────────────────────────────────
+function switchScanMode(mode) {
+    currentScanMode = mode;
+    const camBg   = 'flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold transition';
+    const inactBg = 'flex-1 py-2 bg-slate-700 text-slate-300 rounded-lg text-sm font-semibold transition hover:bg-slate-600';
+
+    if (mode === 'camera') {
+        document.getElementById('cameraScanner').classList.remove('hidden');
+        document.getElementById('fileScanner').classList.add('hidden');
+        document.getElementById('cameraModeBtn').className = camBg;
+        document.getElementById('fileModeBtn').className = inactBg;
+        if (!cameraStarted) startCamera();
+    } else {
+        document.getElementById('cameraScanner').classList.add('hidden');
+        document.getElementById('fileScanner').classList.remove('hidden');
+        document.getElementById('cameraModeBtn').className = inactBg;
+        document.getElementById('fileModeBtn').className = camBg.replace('py-2','py-2');
+        document.getElementById('fileModeBtn').className = 'flex-1 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold transition';
+        if (cameraStarted) {
+            cameraReader.stop().catch(()=>{});
+            cameraStarted = false;
+        }
+    }
+}
+
+function startCamera() {
+    cameraReader.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        (text) => processScan(extractUUID(text)),
+        () => {}
+    ).then(() => { cameraStarted = true; })
+    .catch(err => {
+        console.error("Camera error:", err);
+        switchScanMode('file');
+        alert('Camera unavailable. Switched to upload mode.');
+    });
+}
+
+// ── File upload ──────────────────────────────────────────────
+document.getElementById('qrFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        const text = await Html5Qrcode.scanFile(file, true);
+        processScan(extractUUID(text));
+    } catch(err) {
+        alert('Could not decode QR from image.\n\nTip: Ensure the QR is clear and well-lit.');
+    } finally {
+        e.target.value = '';
+    }
+});
+
+// ── Core scan processor ──────────────────────────────────────
+async function processScan(uuid) {
+    if (isScanningPaused) return;
+    isScanningPaused = true;
+    // Clear last entry state when a new scan begins
+    currentEntryId = null;
+    document.getElementById('lastEntryBar').classList.add('hidden');
+
+    const standby = document.getElementById('standbyState');
+    const resultEl = document.getElementById('resultState');
+    const banner = document.getElementById('statusBanner');
+    const icon = document.getElementById('statusIcon');
+    const statusText = document.getElementById('statusText');
+    const statusSub = document.getElementById('statusSub');
+    const userDetails = document.getElementById('userDetails');
+
+    standby.classList.add('hidden');
+    resultEl.classList.remove('hidden');
+    userDetails.classList.add('hidden');
+    banner.className = 'py-4 px-5 rounded-xl mb-5 text-center border bg-blue-50 border-blue-200 text-blue-700';
+    icon.className = 'fa-solid fa-spinner fa-spin text-5xl mb-2 block';
+    statusText.textContent = 'Verifying...';
+    statusSub.textContent = '';
+
+    try {
+        const res = await fetch('/api/v1/gate/scan', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                qr_uuid: uuid,
+                entry_type: currentEntryType,
+                scanned_by: document.getElementById('guardStation').value || 'Gate Terminal',
+            }),
+        });
+        const data = await res.json();
+
+        if (res.ok && data.action === 'ALLOW') {
+            banner.className = 'py-4 px-5 rounded-xl mb-5 text-center border bg-emerald-50 border-emerald-200 text-emerald-700';
+            icon.className = 'fa-solid fa-circle-check text-5xl mb-2 block';
+            statusText.textContent = currentEntryType === 'IN' ? 'ENTRY APPROVED' : 'EXIT RECORDED';
+            statusSub.textContent = `${data.data.role} • ${data.data.department}`;
+            currentEntryId = data.data.entry_id;
+
+            document.getElementById('userName').textContent = data.data.name;
+            document.getElementById('userRole').textContent = data.data.role;
+            document.getElementById('userDept').textContent = data.data.department;
+
+            const dt = new Date(data.data.entry_time);
+            const istOpts = { timeZone: 'Asia/Kolkata' };
+            document.getElementById('entryTime').textContent = dt.toLocaleTimeString('en-IN', {...istOpts, hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true}) + ' IST';
+            document.getElementById('entryDate').textContent = dt.toLocaleDateString('en-IN', {...istOpts, weekday:'long', year:'numeric', month:'long', day:'numeric'});
+            document.getElementById('transportMode').textContent = data.data.transport_used || 'Not specified';
+            document.getElementById('vehicleNumber').textContent = '';
+            userDetails.classList.remove('hidden');
+            // Populate last-entry bar for use after cooldown
+            document.getElementById('lastEntryName').textContent = data.data.name;
+
+        } else if (data.action === 'DUPLICATE') {
+            banner.className = 'py-4 px-5 rounded-xl mb-5 text-center border bg-amber-50 border-amber-200 text-amber-700';
+            icon.className = 'fa-solid fa-clock-rotate-left text-5xl mb-2 block';
+            statusText.textContent = 'DUPLICATE SCAN';
+            statusSub.textContent = data.message;
+            userDetails.classList.remove('hidden');
+            document.getElementById('userName').textContent = data.data?.name || '—';
+            document.getElementById('userRole').textContent = 'Already logged recently';
+            document.getElementById('userDept').textContent = '';
+
+        } else {
+            banner.className = 'py-4 px-5 rounded-xl mb-5 text-center border bg-red-50 border-red-200 text-red-700';
+            icon.className = 'fa-solid fa-circle-xmark text-5xl mb-2 block';
+            statusText.textContent = 'ACCESS DENIED';
+            statusSub.textContent = data.message || 'Invalid or revoked entry pass.';
+            userDetails.classList.remove('hidden');
+            document.getElementById('userName').textContent = 'Unknown / Revoked Pass';
+            document.getElementById('userRole').textContent = 'Contact admin to re-register';
+            document.getElementById('userDept').textContent = '';
+        }
+    } catch(err) {
+        banner.className = 'py-4 px-5 rounded-xl mb-5 text-center border bg-yellow-50 border-yellow-200 text-yellow-700';
+        icon.className = 'fa-solid fa-triangle-exclamation text-5xl mb-2 block';
+        statusText.textContent = 'NETWORK ERROR';
+        statusSub.textContent = 'Check server connection.';
+    }
+
+    // Countdown
+    let t = 5;
+    document.getElementById('cooldownTimer').textContent = t;
+    const interval = setInterval(() => {
+        t--;
+        document.getElementById('cooldownTimer').textContent = t;
+        if (t <= 0) { clearInterval(interval); resetScannerUI(); }
+    }, 1000);
+}
+
+function resetScannerUI() {
+    document.getElementById('resultState').classList.add('hidden');
+    document.getElementById('standbyState').classList.remove('hidden');
+    isScanningPaused = false;
+    // Keep currentEntryId alive so vehicle can still be added from the last-entry bar
+    if (currentEntryId) {
+        document.getElementById('lastEntryBar').classList.remove('hidden');
+    }
+}
+
+// ── Transport modal ──────────────────────────────────────────
+document.getElementById('changeTransportBtn').addEventListener('click', () => {
+    document.getElementById('transportModal').classList.remove('hidden');
+});
+
+document.getElementById('addVehicleBtn').addEventListener('click', () => {
+    document.getElementById('transportModal').classList.remove('hidden');
+});
+
+document.getElementById('saveTransportBtn').addEventListener('click', async () => {
+    if (!currentEntryId) { alert('No active entry.'); return; }
+    const mode = document.getElementById('modalTransportMode').value;
+    const vehicle = document.getElementById('modalVehicleNumber').value.trim().toUpperCase();
+    try {
+        const res = await fetch(`/api/v1/gate/update-transport/${currentEntryId}`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({transport_used: mode, vehicle_number: vehicle || null}),
+        });
+        const d = await res.json();
+        if (res.ok) {
+            document.getElementById('transportMode').textContent = mode;
+            document.getElementById('vehicleNumber').textContent = vehicle ? `Vehicle: ${vehicle}` : '';
+            document.getElementById('transportModal').classList.add('hidden');
+        } else {
+            alert('Update failed: ' + d.message);
+        }
+    } catch(e) { alert('Network error.'); }
+});
+
+// Start scanner
+switchScanMode('camera');
+</script>
+{% endblock %}

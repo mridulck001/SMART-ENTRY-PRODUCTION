@@ -1,0 +1,149 @@
+/*
+ * NIELIT Smart Entry — Custom Styles
+ * Tailwind CSS handles most styling; this file adds supplemental styles.
+ */
+
+:root {
+    --bg-soft: #f4f8ff;
+    --bg-ink: #111827;
+    --nav-grad-a: #1a365d;
+    --nav-grad-b: #0f3460;
+}
+
+.app-shell {
+    background-image: url('/static/image-nielit.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+    position: relative;
+}
+
+.app-shell::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.35) 100%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.bg-orb {
+    display: none;
+}
+
+.app-nav {
+    background: linear-gradient(100deg, var(--nav-grad-a), var(--nav-grad-b));
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.2);
+}
+
+main, footer {
+    position: relative;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    margin: 1.5rem auto;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.7rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.18s ease;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+}
+
+.nav-link-accent {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mobile-link {
+    display: block;
+    border-radius: 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.55rem 0.75rem;
+    font-weight: 600;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.chip-scanner {
+    color: #bbf7d0;
+    background: rgba(22, 163, 74, 0.2);
+}
+
+.chip-admin {
+    color: #fef9c3;
+    background: rgba(202, 138, 4, 0.2);
+}
+
+/* ── Smooth fade-in animation ─────────────────────────────── */
+.fade-in {
+    animation: fadeIn 0.35s ease-in-out both;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Pulsing status indicator dot ────────────────────────── */
+.pulse-dot {
+    animation: pulseDot 2s ease-in-out infinite;
+}
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.4; transform: scale(1.4); }
+}
+
+/* ── Scanner viewfinder overlay ──────────────────────────── */
+#reader video {
+    border-radius: 0.5rem;
+    width: 100% !important;
+}
+#reader img { display: none; }      /* hide html5-qrcode branding */
+
+/* ── Status banners ──────────────────────────────────────── */
+.banner-allow  { background: #f0fdf4; border-color: #86efac; color: #15803d; }
+.banner-deny   { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.banner-warn   { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.banner-verify { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+
+/* ── Admin table hover ───────────────────────────────────── */
+tbody tr { transition: background 0.15s; }
+tbody tr:hover { background: #f8fafc; }
+
+/* ── Modal backdrop blur ─────────────────────────────────── */
+#transportModal { backdrop-filter: blur(2px); }
+
+/* ── Print: hide nav/footer when printing QR pass ───────── */
+@media print {
+    nav, footer, button, .no-print { display: none !important; }
+    body { background: white; }
+    #qrResult { border: none; box-shadow: none; }
+}

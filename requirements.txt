@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Limiter 
+flask-talisman
+python-dotenv
+qrcode[pil]
+Pillow
+gunicorn
+bleach

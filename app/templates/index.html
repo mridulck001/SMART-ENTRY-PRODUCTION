@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center mb-12 fade-in">
+    <div class="inline-flex items-center justify-center mb-4">
+        <img src="/static/nielit-logo.png" alt="NIELIT" class="h-20 w-auto object-contain">
+    </div>
+    <h1 class="text-4xl font-extrabold text-slate-800 mb-3">NIELIT SMART ENTRY </h1>
+    <p class="text-lg text-slate-500">Professional access, visitor, and gate workflow - Integrated management solution</p>
+</div>
+
+<!-- Live stats bar -->
+<div id="statsBar" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 fade-in">
+    <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-indigo-500">
+        <p class="text-3xl font-bold text-indigo-600" id="statEntries">—</p>
+        <p class="text-xs text-slate-500 mt-1">Entries Today</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-emerald-500">
+        <p class="text-3xl font-bold text-emerald-600" id="statOnPremises">—</p>
+        <p class="text-xs text-slate-500 mt-1">On Premises</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-amber-500">
+        <p class="text-3xl font-bold text-amber-600" id="statVisitors">—</p>
+        <p class="text-xs text-slate-500 mt-1">Visitors Today</p>
+    </div>
+    <div class="bg-white rounded-xl shadow p-4 text-center border-l-4 border-slate-500">
+        <p class="text-3xl font-bold text-slate-600" id="statUsers">—</p>
+        <p class="text-xs text-slate-500 mt-1">Registered Users</p>
+    </div>
+</div>
+
+<div class="grid md:grid-cols-3 gap-6 mb-10">
+    <a href="/api/v1/portal/" class="group bg-white rounded-xl shadow hover:shadow-xl hover:-translate-y-1 transition-all p-7 text-center fade-in block">
+        <div class="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-indigo-200 transition">
+            <i class="fa-solid fa-user-plus text-3xl text-indigo-600"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Registration Portal</h2>
+        <p class="text-slate-500 text-sm">Register users and generate secure QR access passes.</p>
+        <span class="mt-4 inline-block bg-indigo-600 text-white text-sm px-5 py-2 rounded-lg font-semibold group-hover:bg-indigo-700 transition">Open Portal</span>
+    </a>
+
+    <a href="/api/v1/gate/" class="group bg-slate-900 rounded-xl shadow hover:shadow-xl hover:-translate-y-1 transition-all p-7 text-center fade-in block" style="animation-delay:.1s">
+        <div class="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-emerald-200 transition">
+            <i class="fa-solid fa-qrcode text-3xl text-emerald-600"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white mb-2">Security Gate</h2>
+        <p class="text-slate-300 text-sm">Dedicated scanner terminal with camera, upload mode, and rapid verification.</p>
+        <span class="mt-4 inline-block bg-emerald-600 text-white text-sm px-5 py-2 rounded-lg font-semibold group-hover:bg-emerald-700 transition">Open Scanner</span>
+    </a>
+
+    <a href="/api/v1/manual/" class="group bg-white rounded-xl shadow hover:shadow-xl hover:-translate-y-1 transition-all p-7 text-center fade-in block" style="animation-delay:.2s">
+        <div class="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-amber-200 transition">
+            <i class="fa-solid fa-clipboard-user text-3xl text-amber-600"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Visitor Log</h2>
+        <p class="text-slate-500 text-sm">Manually log walk-in visitors with host and ID details.</p>
+        <span class="mt-4 inline-block bg-amber-600 text-white text-sm px-5 py-2 rounded-lg font-semibold group-hover:bg-amber-700 transition">Log Visitor</span>
+    </a>
+</div>
+
+<div class="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl shadow-lg p-7 text-white fade-in flex flex-wrap items-center justify-between gap-4">
+    <div>
+        <h3 class="text-xl font-bold mb-1"><i class="fa-solid fa-laptop-code mr-2 text-cyan-300"></i>Role-Separated Workspace</h3>
+        <p class="text-slate-300 text-sm">Scanner and admin tools are intentionally isolated from standard operations navigation.</p>
+    </div>
+    <div class="flex gap-3 flex-wrap">
+        <a href="/api/v1/gate/" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+            <i class="fa-solid fa-qrcode mr-2"></i>Go To Scanner
+        </a>
+        <a href="/api/v1/admin/dashboard-ui" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-semibold text-sm transition">
+            <i class="fa-solid fa-lock mr-2"></i>Admin Sign In
+        </a>
+    </div>
+</div>
+
+<script>
+// Load live stats on page load
+async function loadStats() {
+    try {
+        const r = await fetch('/api/v1/gate/today-stats');
+        const d = await r.json();
+        if (d.status === 'success') {
+            document.getElementById('statEntries').textContent = d.data.entries_today;
+            document.getElementById('statOnPremises').textContent = d.data.currently_on_premises;
+            document.getElementById('statVisitors').textContent = d.data.visitors_today ?? '—';
+        }
+    } catch(e) {}
+    // Try admin dashboard for total users (may require auth)
+    try {
+        const r2 = await fetch('/api/v1/admin/dashboard');
+        const d2 = await r2.json();
+        if (d2.status === 'success') {
+            document.getElementById('statUsers').textContent = d2.data.total_registered_users;
+            document.getElementById('statVisitors').textContent = d2.data.visitors_today;
+        }
+    } catch(e) {}
+}
+loadStats();
+</script>
+{% endblock %}
